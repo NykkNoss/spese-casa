@@ -120,6 +120,11 @@ export default function NotificationPage() {
     [expenses]
   );
 
+  const reportExpenses = useMemo(
+    () => sortedExpenses.filter((expense) => expense.amount > 0),
+    [sortedExpenses]
+  );
+
   const regularTotal = useMemo(
     () => expenses.filter((expense) => !expense.isReimbursement).reduce((sum, expense) => sum + expense.amount, 0),
     [expenses]
@@ -185,7 +190,7 @@ export default function NotificationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: today,
-          expenses: sortedExpenses.map((expense) => ({
+          expenses: reportExpenses.map((expense) => ({
             title: expense.title,
             amount: expense.amount,
             isReimbursement: expense.isReimbursement,
@@ -310,8 +315,8 @@ export default function NotificationPage() {
 
         <div className="notification-list">
           {loading ? <p className="empty-state">Caricamento riepilogo...</p> : null}
-          {!loading && sortedExpenses.length === 0 ? <p className="empty-state">Nessuna voce inserita.</p> : null}
-          {sortedExpenses.map((expense) => (
+          {!loading && reportExpenses.length === 0 ? <p className="empty-state">Nessuna voce con importo da riepilogare.</p> : null}
+          {reportExpenses.map((expense) => (
             <div className="notification-row" key={expense.id}>
               <div>
                 <span>{expense.title}</span>
