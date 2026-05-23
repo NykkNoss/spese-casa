@@ -176,8 +176,15 @@ export default function Home() {
     setError("");
     try {
       await signInWithPopup(firebase.auth, firebase.googleProvider);
-    } catch {
-      setError("Login non riuscito. Riprova.");
+    } catch (loginError) {
+      const message =
+        loginError instanceof Error ? loginError.message : "Errore sconosciuto";
+      const code =
+        typeof loginError === "object" && loginError && "code" in loginError
+          ? String(loginError.code)
+          : "senza codice";
+
+      setError(`Login non riuscito: ${code} - ${message}`);
     }
   }
 
