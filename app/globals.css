@@ -516,3 +516,222 @@ header p {
   }
 }
 
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-card {
+  padding: 24px;
+}
+
+.notification-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.notification-head h2 {
+  margin-bottom: 4px;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.notification-head p:not(.section-title) {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.notification-total {
+  min-width: 220px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--black);
+  color: #ffffff;
+}
+
+.notification-total span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.notification-total strong {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.notification-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.notification-summary div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.notification-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.notification-summary strong {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.notification-list {
+  display: grid;
+  gap: 8px;
+}
+
+.notification-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.notification-row div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notification-row span {
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.notification-row em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.notification-row strong {
+  white-space: nowrap;
+}
+
+.notification-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mail-status {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .header-actions,
+  .notification-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .notification-head {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-total {
+    min-width: 0;
+  }
+
+  .notification-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 460px) {
+  .notification-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-row {
+    align-items: flex-start;
+  }
+}
+
+@media print {
+  body {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  .container {
+    max-width: none;
+  }
+
+  .card,
+  .notification-card {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+.row-check-blue {
+  border-color: rgba(37, 99, 235, 0.28);
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.row-check-blue input {
+  accent-color: #2563eb;
+}
+
+.expense-row.undivided-row {
+  border-color: rgba(37, 99, 235, 0.24);
+}
+
+.expense-row.reimbursement-row.undivided-row {
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+@media (max-width: 460px) {
+  .expense-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .expense-actions .btn-danger {
+    grid-column: 1 / -1;
+  }
+}
+
+.row-check:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.row-check:has(input:disabled) input {
+  cursor: not-allowed;
+}

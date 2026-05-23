@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   addDoc,
@@ -19,6 +19,7 @@ import {
   signOut,
   type User
 } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getFirebaseClient } from "@/lib/firebase";
 
@@ -27,6 +28,7 @@ type Expense = {
   title: string;
   amount: number;
   isReimbursement: boolean;
+  isUndivided?: boolean;
   createdAt?: Timestamp;
 };
 
@@ -70,6 +72,7 @@ function loadCachedRounding() {
 }
 
 export default function Home() {
+  const router = useRouter();
   const ledgerId = process.env.NEXT_PUBLIC_HOME_EXPENSES_ID || "casa";
   const firebase = useMemo(() => getFirebaseClient(), []);
   const [user, setUser] = useState<User | null>(null);
@@ -168,8 +171,32 @@ export default function Home() {
     const parsed = rounding.trim() === "" ? 0 : parseAmount(rounding);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }, [rounding]);
+  const sharedRegularTotal = useMemo(
+    () =>
+      expenses
+        .filter((expense) => !expense.isReimbursement && !expense.isUndivided)
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    [expenses]
+  );
+  const sharedReimbursementTotal = useMemo(
+    () =>
+      expenses
+        .filter((expense) => expense.isReimbursement && !expense.isUndivided)
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    [expenses]
+  );
+  const undividedTotal = useMemo(
+    () =>
+      expenses
+        .filter((expense) => expense.isUndivided)
+        .reduce(
+          (sum, expense) => sum + (expense.isReimbursement ? -expense.amount : expense.amount),
+          0
+        ),
+    [expenses]
+  );
   const netTotal = regularTotal - reimbursementTotal;
-  const myShare = netTotal / 2 - roundingAmount;
+  const myShare = (sharedRegularTotal - sharedReimbursementTotal) / 2 + undividedTotal - roundingAmount;
 
   async function login() {
     if (!firebase) return;
@@ -202,6 +229,7 @@ export default function Home() {
         title: cleanTitle,
         amount: 0,
         isReimbursement: false,
+        isUndivided: false,
         createdAt: serverTimestamp()
       });
       setTitle("");
@@ -234,16 +262,20 @@ export default function Home() {
 
   async function toggleReimbursement(expense: Expense) {
     if (!firebase) return;
+    const nextReimbursement = !expense.isReimbursement;
 
     setExpenses((current) =>
       current.map((item) =>
-        item.id === expense.id ? { ...item, isReimbursement: !expense.isReimbursement } : item
+        item.id === expense.id
+          ? { ...item, isReimbursement: nextReimbursement, isUndivided: nextReimbursement ? false : item.isUndivided }
+          : item
       )
     );
 
     try {
       await updateDoc(doc(firebase.db, "home_expenses", ledgerId, "items", expense.id), {
-        isReimbursement: !expense.isReimbursement
+        isReimbursement: nextReimbursement,
+        isUndivided: nextReimbursement ? false : Boolean(expense.isUndivided)
       });
       setError("");
     } catch {
@@ -251,6 +283,28 @@ export default function Home() {
     }
   }
 
+  async function toggleUndivided(expense: Expense) {
+    if (!firebase) return;
+    const nextUndivided = !expense.isUndivided;
+
+    setExpenses((current) =>
+      current.map((item) =>
+        item.id === expense.id
+          ? { ...item, isUndivided: nextUndivided, isReimbursement: nextUndivided ? false : item.isReimbursement }
+          : item
+      )
+    );
+
+    try {
+      await updateDoc(doc(firebase.db, "home_expenses", ledgerId, "items", expense.id), {
+        isUndivided: nextUndivided,
+        isReimbursement: nextUndivided ? false : expense.isReimbursement
+      });
+      setError("");
+    } catch {
+      setError("Firebase non lascia modificare questa voce. Controlla le regole Firestore.");
+    }
+  }
   async function updateRounding(value: string) {
     if (!firebase) return;
     setRounding(value);
@@ -360,7 +414,7 @@ export default function Home() {
             <i className="ti ti-home-dollar" />
             Spese Casa
           </h1>
-          <p>Aggiungi le spese condivise, segna i rimborsi e calcola la metÃ  da versare.</p>
+          <p>Aggiungi le spese condivise, segna i rimborsi e calcola la {"met\u00e0"} da versare.</p>
         </div>
         <button className="btn" onClick={() => signOut(firebase.auth)}>
           <i className="ti ti-logout" />
@@ -392,7 +446,7 @@ export default function Home() {
         <label className="summary-item rounding">
           <span>Arrotondamento</span>
           <div className="summary-input">
-            <span>â‚¬</span>
+            <span>{"\u20ac"}</span>
             <input
               type="number"
               min="0"
@@ -404,7 +458,7 @@ export default function Home() {
           </div>
         </label>
         <div className="summary-item share">
-          <span>La tua metÃ </span>
+          <span>La tua {"met\u00e0"}</span>
           <strong>{formatCurrency(myShare)}</strong>
         </div>
       </section>
@@ -432,7 +486,7 @@ export default function Home() {
         <div className="section-heading">
           <p className="section-title">Voci inserite</p>
           <div className="section-actions">
-            <button className="btn btn-small" type="button">
+            <button className="btn btn-small" type="button" onClick={() => router.push("/notifica")}>
               <i className="ti ti-mail" />
               Notifica
             </button>
@@ -458,11 +512,11 @@ export default function Home() {
           ) : null}
 
           {sortedExpenses.map((expense) => (
-            <div className={`expense-row${expense.isReimbursement ? " reimbursement-row" : ""}`} key={expense.id}>
+            <div className={`expense-row${expense.isReimbursement ? " reimbursement-row" : ""}${expense.isUndivided ? " undivided-row" : ""}`} key={expense.id}>
               <div className="expense-main">
                 <span className="expense-title">{expense.title}</span>
                 <label className="amount-field">
-                  <span>â‚¬</span>
+                  <span>{"\u20ac"}</span>
                   <input
                     type="number"
                     min="0"
@@ -478,9 +532,19 @@ export default function Home() {
                   <input
                     type="checkbox"
                     checked={expense.isReimbursement}
+                    disabled={Boolean(expense.isUndivided)}
                     onChange={() => void toggleReimbursement(expense)}
                   />
                   <span>Rimborso</span>
+                </label>
+                <label className="row-check row-check-blue">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(expense.isUndivided)}
+                    disabled={expense.isReimbursement}
+                    onChange={() => void toggleUndivided(expense)}
+                  />
+                  <span>Non dividere</span>
                 </label>
                 <button className="btn btn-danger btn-small" onClick={() => void removeExpense(expense.id)}>
                   <i className="ti ti-trash" />
