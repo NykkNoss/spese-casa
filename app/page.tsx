@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   addDoc,
@@ -298,6 +298,27 @@ export default function Home() {
     }
   }
 
+  async function markPaid() {
+    if (!firebase) return;
+    const ok = window.confirm("Segnare tutto come pagato e azzerare gli importi?");
+    if (!ok) return;
+
+    setExpenses((current) => current.map((expense) => ({ ...expense, amount: 0 })));
+
+    try {
+      await Promise.all(
+        expenses.map((expense) =>
+          updateDoc(doc(firebase.db, "home_expenses", ledgerId, "items", expense.id), {
+            amount: 0
+          })
+        )
+      );
+      setError("");
+    } catch {
+      setError("Firebase non lascia segnare le spese come pagate. Controlla le regole Firestore.");
+    }
+  }
+
   if (!authReady) {
     return <main className="container">Caricamento...</main>;
   }
@@ -339,7 +360,7 @@ export default function Home() {
             <i className="ti ti-home-dollar" />
             Spese Casa
           </h1>
-          <p>Aggiungi le spese condivise, segna i rimborsi e calcola la metà da versare.</p>
+          <p>Aggiungi le spese condivise, segna i rimborsi e calcola la metÃ  da versare.</p>
         </div>
         <button className="btn" onClick={() => signOut(firebase.auth)}>
           <i className="ti ti-logout" />
@@ -371,7 +392,7 @@ export default function Home() {
         <label className="summary-item rounding">
           <span>Arrotondamento</span>
           <div className="summary-input">
-            <span>€</span>
+            <span>â‚¬</span>
             <input
               type="number"
               min="0"
@@ -383,7 +404,7 @@ export default function Home() {
           </div>
         </label>
         <div className="summary-item share">
-          <span>La tua metà</span>
+          <span>La tua metÃ </span>
           <strong>{formatCurrency(myShare)}</strong>
         </div>
       </section>
@@ -410,12 +431,24 @@ export default function Home() {
       <section className="card">
         <div className="section-heading">
           <p className="section-title">Voci inserite</p>
-          {expenses.length > 0 ? (
-            <button className="btn btn-danger btn-small" onClick={() => void clearAll()}>
-              <i className="ti ti-trash" />
-              Svuota
+          <div className="section-actions">
+            <button className="btn btn-small" type="button">
+              <i className="ti ti-mail" />
+              Notifica
             </button>
-          ) : null}
+            {expenses.length > 0 ? (
+              <button className="btn btn-success btn-small" onClick={() => void markPaid()}>
+                <i className="ti ti-check" />
+                Pagato
+              </button>
+            ) : null}
+            {expenses.length > 0 ? (
+              <button className="btn btn-danger btn-small" onClick={() => void clearAll()}>
+                <i className="ti ti-trash" />
+                Svuota
+              </button>
+            ) : null}
+          </div>
         </div>
         <div className="expense-list">
           {loading ? <p className="empty-state">Caricamento spese...</p> : null}
@@ -429,7 +462,7 @@ export default function Home() {
               <div className="expense-main">
                 <span className="expense-title">{expense.title}</span>
                 <label className="amount-field">
-                  <span>€</span>
+                  <span>â‚¬</span>
                   <input
                     type="number"
                     min="0"
@@ -461,3 +494,4 @@ export default function Home() {
     </main>
   );
 }
+
